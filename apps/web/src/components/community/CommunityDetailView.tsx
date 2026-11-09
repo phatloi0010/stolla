@@ -3,21 +3,27 @@
 import { AppLinkButton } from "@/components/ui/AppLinkButton";
 import type { Community, CommunityRegistry } from "@/lib/community/types";
 import type { GuardianAdapter } from "@/lib/community/guardian";
+import type { PriceOracleAdapter } from "@/lib/community/priceOracle";
 import { useRegistryCommunity } from "@/lib/community/useRegistryCommunity";
 import { CommunityBreadcrumbs } from "./CommunityBreadcrumbs";
 import { CommunityNotFound } from "./CommunityNotFound";
 import { GuardianControls } from "./GuardianControls";
+import { PriceOracleDebugPanel } from "./PriceOracleDebugPanel";
 
 export type CommunityDetailViewProps = {
   communityId: string;
   registry?: CommunityRegistry;
   guardianAdapter?: GuardianAdapter;
+  oracleContractId?: string | null;
+  oracleAdapter?: PriceOracleAdapter;
 };
 
 export function CommunityDetailView({
   communityId,
   registry,
   guardianAdapter,
+  oracleContractId,
+  oracleAdapter,
 }: CommunityDetailViewProps) {
   const resolution = useRegistryCommunity(communityId, registry);
 
@@ -35,10 +41,27 @@ export function CommunityDetailView({
     return <CommunityNotFound communityId={communityId} />;
   }
 
-  return <CommunityDetailPanel community={resolution.result.community} guardianAdapter={guardianAdapter} />;
+  return (
+    <CommunityDetailPanel
+      community={resolution.result.community}
+      guardianAdapter={guardianAdapter}
+      oracleContractId={oracleContractId}
+      oracleAdapter={oracleAdapter}
+    />
+  );
 }
 
-function CommunityDetailPanel({ community, guardianAdapter }: { community: Community; guardianAdapter?: GuardianAdapter }) {
+function CommunityDetailPanel({
+  community,
+  guardianAdapter,
+  oracleContractId,
+  oracleAdapter,
+}: {
+  community: Community;
+  guardianAdapter?: GuardianAdapter;
+  oracleContractId?: string | null;
+  oracleAdapter?: PriceOracleAdapter;
+}) {
   const displayName =
     community.metadata?.name ??
     `Community ${community.record.id.slice(0, 8)}`;
@@ -53,7 +76,10 @@ function CommunityDetailPanel({ community, guardianAdapter }: { community: Commu
       <h1 className="mt-4 text-2xl font-bold text-slate-100">{displayName}</h1>
 
       {community.record.timelockContract && (
-        <GuardianControls timelockId={community.record.timelockContract} adapter={guardianAdapter} />
+        <GuardianControls
+          timelockId={community.record.timelockContract}
+          adapter={guardianAdapter}
+        />
       )}
 
       {community.metadata && (
@@ -84,6 +110,11 @@ function CommunityDetailPanel({ community, guardianAdapter }: { community: Commu
           </dd>
         </div>
       </dl>
+
+      <PriceOracleDebugPanel
+        oracleContractId={oracleContractId}
+        adapter={oracleAdapter}
+      />
 
       <AppLinkButton
         href={`/community/${community.record.id}/proposals`}
